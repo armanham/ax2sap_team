@@ -1,7 +1,7 @@
 package com.bdg.airport_management_system;
 
-import com.bdg.ax2sap.airport_management_system.hibernate.HibernateUtil;
-import com.bdg.ax2sap.airport_management_system.service.AddressService;
+import com.bdg.airport_management_system.hibernate.HibernateUtil;
+import com.bdg.airport_management_system.service.AddressService;
 
 public class Main {
 
