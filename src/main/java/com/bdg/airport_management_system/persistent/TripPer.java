@@ -3,6 +3,7 @@ package com.bdg.airport_management_system.persistent;
 import javax.persistence.*;
 import java.sql.Timestamp;
 
+//TODO extends BaseEntity
 @Entity
 @Table(name = "trip")
 public class TripPer {
