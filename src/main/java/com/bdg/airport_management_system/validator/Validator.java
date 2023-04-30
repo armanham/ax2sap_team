@@ -2,6 +2,8 @@ package com.bdg.airport_management_system.validator;
 
 public class Validator {
 
+
+    //popoxutyun
     public static void checkId(int id) {
         if (id <= 0) {
             throw new IllegalArgumentException("'id' must be a positive number: ");
