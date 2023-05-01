@@ -14,6 +14,9 @@ import java.io.IOException;
 public class XMLValidator {
 
     public static void of(File xmlFile, File schemaFile) {
+        if (xmlFile == null || schemaFile == null) {
+            throw new NullPointerException("Passed null value for one or both of parameters: ");
+        }
 
         SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
