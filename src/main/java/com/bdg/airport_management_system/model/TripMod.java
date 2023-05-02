@@ -18,14 +18,12 @@ public class TripMod extends BaseMod {
     private Timestamp timeIn;
 
     public TripMod(
-            final int id,
             final CompanyMod company,
             final String airplane,
             final String townFrom,
             final String townTo,
             final Timestamp timeOut,
             final Timestamp timeIn) {
-        super(id);
         setCompany(company);
         setAirplane(airplane);
         setTownFrom(townFrom);

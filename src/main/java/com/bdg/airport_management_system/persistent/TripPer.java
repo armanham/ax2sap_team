@@ -1,16 +1,13 @@
 package com.bdg.airport_management_system.persistent;
 
+import com.bdg.airport_management_system.persistent.common.BaseEntity;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
 
-//TODO extends BaseEntity
 @Entity
 @Table(name = "trip")
-public class TripPer {
-
-    @Id
-    @Column(name = "trip_number", updatable = false)
-    private int tripNumber;
+public class TripPer extends BaseEntity{
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", referencedColumnName = "id", nullable = false, updatable = false)
@@ -33,14 +30,6 @@ public class TripPer {
 
 
     public TripPer() {
-    }
-
-    public int getTripNumber() {
-        return tripNumber;
-    }
-
-    public void setTripNumber(final int tripNumber) {
-        this.tripNumber = tripNumber;
     }
 
     public CompanyPer getCompany() {

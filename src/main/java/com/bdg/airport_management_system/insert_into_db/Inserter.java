@@ -5,6 +5,7 @@ import com.bdg.airport_management_system.persistent.*;
 import com.bdg.airport_management_system.validator.Validator;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -130,19 +131,18 @@ public class Inserter {
                 String line = lines.get(i);
                 String[] fields = line.split(",");
 
-                CompanyPer companyPer = session.get(CompanyPer.class, Integer.parseInt(fields[1]));
+                CompanyPer companyPer = session.get(CompanyPer.class, Integer.parseInt(fields[0]));
                 if (companyPer == null) {
                     transaction.rollback();
                     return;
                 }
 
                 TripPer tripPer = new TripPer();
-                tripPer.setTripNumber(Integer.parseInt(fields[0]));
-                tripPer.setAirplane(fields[2]);
-                tripPer.setTimeIn(Timestamp.valueOf(fields[5]));
-                tripPer.setTimeOut(Timestamp.valueOf(fields[6]));
-                tripPer.setTownFrom(fields[3]);
-                tripPer.setTownTo(fields[4]);
+                tripPer.setAirplane(fields[1]);
+                tripPer.setTimeIn(Timestamp.valueOf(fields[4]));
+                tripPer.setTimeOut(Timestamp.valueOf(fields[5]));
+                tripPer.setTownFrom(fields[2]);
+                tripPer.setTownTo(fields[3]);
                 tripPer.setCompany(companyPer);
 
                 session.save(tripPer);

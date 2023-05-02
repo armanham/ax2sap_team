@@ -1,12 +1,14 @@
 package com.bdg.airport_management_system.converter.model_to_persistent.common;
 
+import com.bdg.airport_management_system.model.common.BaseMod;
+import com.bdg.airport_management_system.persistent.common.BaseEntity;
 import com.bdg.airport_management_system.validator.Validator;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public abstract class ModToPer<M, P> {
+public abstract class ModToPer<M extends BaseMod, P extends BaseEntity> {
 
     public ModToPer() {
     }
