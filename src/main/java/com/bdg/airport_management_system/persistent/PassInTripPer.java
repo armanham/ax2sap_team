@@ -8,12 +8,12 @@ import java.sql.Timestamp;
 @Entity
 @Table(
         name = "pass_in_trip",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"trip_number", "passenger_id", "place"})}
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"trip_id", "passenger_id", "place"})}
 )
 public class PassInTripPer extends BaseEntity {
 
     @ManyToOne
-    @JoinColumn(name = "trip_number", referencedColumnName = "trip_number", nullable = false)
+    @JoinColumn(name = "trip_id", referencedColumnName = "id", nullable = false)
     private TripPer trip;
 
     @ManyToOne
