@@ -3,6 +3,7 @@ package com.bdg.xml_json.gson;
 import java.util.List;
 
 public class Actor {
+
     private String name;
     private String artist;
     private String description;
