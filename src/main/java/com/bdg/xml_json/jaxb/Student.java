@@ -2,7 +2,7 @@ package com.bdg.xml_json.jaxb;
 
 import javax.xml.bind.annotation.*;
 
-@XmlRootElement(name = "Student")
+@XmlRootElement(name = "student")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Student {
 
