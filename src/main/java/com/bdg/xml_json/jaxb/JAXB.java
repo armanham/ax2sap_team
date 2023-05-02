@@ -5,32 +5,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JAXB {
-
-    public static void main(String[] args) {
-
-        List<Student> students = new ArrayList<>(
-                List.of(
-                        new Student(33, "Arman", "Hakhveryan", "arm", 80),
-                        new Student(53, "Perch", "Harutyunyan", "perch", 80)));
-
-
-        JAXB jaxb = new JAXB();
-//        jaxb.marshal(
-//                new Student(21, "Ani", "Hakobyan", "ani-hyan", 100),
-//                new File("src/main/resources/xj/students.xml"));
-//        jaxb.marshal(
-//                new Student(33, "Arman", "Hakhveryan", "arm", 80),
-//                new File("src/main/resources/xj/students.xml")
-//        );
-//
-//        jaxb.marshalList(new StudentList(students), new File("src/main/resources/xj/students_without_marks.xml"));
-
-        System.out.println(jaxb.unmarshal(new File("src/main/resources/xj/demo.xml")));
-    }
 
     public File marshal(Student fromObj, File toXml) {
         if (fromObj == null || toXml == null) {
