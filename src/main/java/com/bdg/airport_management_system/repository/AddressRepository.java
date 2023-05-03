@@ -5,7 +5,5 @@ import com.bdg.airport_management_system.repository.common.CommonRepository;
 
 public interface AddressRepository extends CommonRepository<AddressMod> {
 
-    boolean exists(AddressMod addressMod);
-
     boolean updateBy(int idToUpdate, String newCountry, String newCity);
 }
