@@ -250,11 +250,11 @@ public class TripService implements TripRepository {
     }
 
 
-    public boolean exists(TripMod trip) {
-        checkNull(trip);
+    public boolean exists(TripMod item) {
+        checkNull(item);
 
         for (TripMod tempTripMod : getAll()) {
-            if (trip.equals(tempTripMod)) {
+            if (item.equals(tempTripMod)) {
                 return true;
             }
         }
@@ -262,11 +262,11 @@ public class TripService implements TripRepository {
     }
 
 
-    public int getId(TripMod trip) {
-        checkNull(trip);
+    public int getId(TripMod item) {
+        checkNull(item);
 
         for (TripMod tempTripMod : getAll()) {
-            if (trip.equals(tempTripMod)) {
+            if (item.equals(tempTripMod)) {
                 return tempTripMod.getId();
             }
         }

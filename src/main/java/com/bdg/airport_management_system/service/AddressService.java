@@ -25,11 +25,11 @@ public class AddressService implements AddressRepository {
 
 
     @Override
-    public int getId(AddressMod addressMod) {
-        checkNull(addressMod);
+    public int getId(AddressMod item) {
+        checkNull(item);
 
         for (AddressMod addressModTemp : getAll()) {
-            if (addressModTemp.equals(addressMod)) {
+            if (addressModTemp.equals(item)) {
                 return addressModTemp.getId();
             }
         }
@@ -37,11 +37,11 @@ public class AddressService implements AddressRepository {
     }
 
 
-    public boolean exists(AddressMod addressMod) {
-        checkNull(addressMod);
+    public boolean exists(AddressMod item) {
+        checkNull(item);
 
         for (AddressMod addressModTemp : getAll()) {
-            if (addressModTemp.equals(addressMod)) {
+            if (addressModTemp.equals(item)) {
                 return true;
             }
         }

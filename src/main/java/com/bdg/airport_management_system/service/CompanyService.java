@@ -193,11 +193,11 @@ public class CompanyService implements CompanyRepository {
     }
 
 
-    public boolean exists(CompanyMod company) {
-        checkNull(company);
+    public boolean exists(CompanyMod item) {
+        checkNull(item);
 
         for (CompanyMod tempCompanyMod : getAll()) {
-            if (company.equals(tempCompanyMod)) {
+            if (item.equals(tempCompanyMod)) {
                 return true;
             }
         }
@@ -205,11 +205,11 @@ public class CompanyService implements CompanyRepository {
     }
 
 
-    public int getId(CompanyMod company) {
-        checkNull(company);
+    public int getId(CompanyMod item) {
+        checkNull(item);
 
         for (CompanyMod tempCompanyMod : getAll()) {
-            if (company.equals(tempCompanyMod)) {
+            if (item.equals(tempCompanyMod)) {
                 return tempCompanyMod.getId();
             }
         }
