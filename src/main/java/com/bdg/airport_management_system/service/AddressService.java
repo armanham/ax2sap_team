@@ -159,18 +159,19 @@ public class AddressService implements AddressRepository {
 
 
     @Override
-    public boolean updateBy(int id, String newCountry, String newCity) {
-        checkId(id);
+    public boolean updateBy(int idToUpdate, String newCountry, String newCity) {
+        checkId(idToUpdate);
+
+        if (getBy(idToUpdate) == null) {
+            System.out.println("Address with " + idToUpdate + " id not found: ");
+            return false;
+        }
 
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            AddressPer addressPer = session.get(AddressPer.class, id);
-            if (addressPer == null) {
-                transaction.rollback();
-                return false;
-            }
+            AddressPer addressPer = session.get(AddressPer.class, idToUpdate);
 
             if (!(newCountry == null || newCountry.isEmpty())) {
                 addressPer.setCountry(newCountry);

@@ -179,6 +179,11 @@ public class TripService implements TripRepository {
                             Timestamp newTimeIn) {
         checkId(idToUpdate);
 
+        if (getBy(idToUpdate) == null) {
+            System.out.println("Trip with " + idToUpdate + " id not found: ");
+            return false;
+        }
+
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();

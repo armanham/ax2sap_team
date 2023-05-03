@@ -135,22 +135,23 @@ public class CompanyService implements CompanyRepository {
 
 
     @Override
-    public boolean updateBy(int id, CompanyMod item) {
-        checkId(id);
-        checkNull(item);
+    public boolean updateBy(int idToUpdate, String newName) {
+        checkId(idToUpdate);
+
+        if (getBy(idToUpdate) == null) {
+            System.out.println("Company with " + idToUpdate + " id not found: ");
+            return false;
+        }
 
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            CompanyPer companyPer = session.get(CompanyPer.class, id);
-            if (companyPer == null) {
-                transaction.commit();
-                return false;
-            }
+            CompanyPer companyPer = session.get(CompanyPer.class, idToUpdate);
 
-            companyPer.setName(item.getName());
-            companyPer.setFoundDate(item.getFoundDate());
+            if (!(newName == null || newName.isEmpty())) {
+                companyPer.setName(newName);
+            }
 
             transaction.commit();
             return true;
