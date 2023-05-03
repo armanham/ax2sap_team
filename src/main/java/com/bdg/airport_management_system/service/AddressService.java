@@ -194,6 +194,11 @@ public class AddressService implements AddressRepository {
     public boolean deleteBy(int id) {
         checkId(id);
 
+        if (getBy(id) == null) {
+            System.out.println("Address with " + id + " id not found: ");
+            return false;
+        }
+
         if (existsPassengerBy(id)) {
             System.out.println("First remove address by " + id + " in passenger table: ");
             return false;
@@ -203,13 +208,8 @@ public class AddressService implements AddressRepository {
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            AddressPer addressPer = session.get(AddressPer.class, id);
-            if (addressPer == null) {
-                transaction.rollback();
-                return false;
-            }
+            session.delete(session.get(AddressPer.class, id));
 
-            session.delete(addressPer);
             transaction.commit();
             return true;
         } catch (HibernateException e) {

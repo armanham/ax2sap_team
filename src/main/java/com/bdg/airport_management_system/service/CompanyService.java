@@ -34,7 +34,7 @@ public class CompanyService implements CompanyRepository {
 
             CompanyPer companyPer = session.get(CompanyPer.class, id);
             if (companyPer == null) {
-                transaction.commit();
+                transaction.rollback();
                 return null;
             }
 
@@ -57,7 +57,7 @@ public class CompanyService implements CompanyRepository {
             TypedQuery<CompanyPer> query = session.createQuery("FROM CompanyPer", CompanyPer.class);
 
             if (query.getResultList().isEmpty()) {
-                transaction.commit();
+                transaction.rollback();
                 return null;
             }
 
@@ -92,7 +92,7 @@ public class CompanyService implements CompanyRepository {
             query.setMaxResults(perPage);
 
             if (query.getResultList().isEmpty()) {
-                transaction.commit();
+                transaction.rollback();
                 return null;
             }
 
@@ -167,6 +167,11 @@ public class CompanyService implements CompanyRepository {
     public boolean deleteBy(int id) {
         checkId(id);
 
+        if (getBy(id) == null) {
+            System.out.println("Company with " + id + " id not found: ");
+            return false;
+        }
+
         if (existsTripBy(id)) {
             System.out.println("First remove company by " + id + " in trip table: ");
             return false;
@@ -176,14 +181,8 @@ public class CompanyService implements CompanyRepository {
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            CompanyPer companyPer = session.get(CompanyPer.class, id);
+            session.delete(session.get(CompanyPer.class, id));
 
-            if (companyPer == null) {
-                transaction.commit();
-                return false;
-            }
-
-            session.delete(companyPer);
             transaction.commit();
             return true;
         } catch (HibernateException e) {

@@ -223,6 +223,12 @@ public class TripService implements TripRepository {
     @Override
     public boolean deleteBy(int id) {
         checkId(id);
+
+        if (getBy(id) == null) {
+            System.out.println("Trip with " + id + " id not found: ");
+            return false;
+        }
+
         if (existsPassInTripBy(id)) {
             System.out.println("First remove Trip by " + id + " in PassInTrip table: ");
             return false;
@@ -232,13 +238,8 @@ public class TripService implements TripRepository {
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            TripPer trip = session.get(TripPer.class, id);
-            if (trip == null) {
-                transaction.rollback();
-                return false;
-            }
+            session.delete(session.get(TripPer.class, id));
 
-            session.delete(trip);
             transaction.commit();
             return true;
         } catch (HibernateException e) {
