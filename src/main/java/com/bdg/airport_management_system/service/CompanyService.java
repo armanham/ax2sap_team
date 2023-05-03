@@ -110,11 +110,17 @@ public class CompanyService implements CompanyRepository {
     public CompanyMod save(CompanyMod item) {
         checkNull(item);
 
+        if (exists(item)) {
+            System.out.println("[" + item + "] company already exists: ");
+            return null;
+        }
+
+        CompanyPer companyPer = MOD_TO_PER.getPersistentFrom(item);
+
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            CompanyPer companyPer = MOD_TO_PER.getPersistentFrom(item);
             session.save(companyPer);
             item.setId(companyPer.getId());
 
@@ -184,6 +190,30 @@ public class CompanyService implements CompanyRepository {
             transaction.rollback();
             throw new RuntimeException(e);
         }
+    }
+
+
+    public boolean exists(CompanyMod company) {
+        checkNull(company);
+
+        for (CompanyMod tempCompanyMod : getAll()) {
+            if (company.equals(tempCompanyMod)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public int getId(CompanyMod company) {
+        checkNull(company);
+
+        for (CompanyMod tempCompanyMod : getAll()) {
+            if (company.equals(tempCompanyMod)) {
+                return tempCompanyMod.getId();
+            }
+        }
+        return -1;
     }
 
 
