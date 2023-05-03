@@ -1,10 +1,14 @@
 package com.bdg.airport_management_system.repository.common;
 
+import com.bdg.airport_management_system.model.AddressMod;
+
 import java.util.Set;
 
 public interface CommonRepository<T> {
 
     T getBy(int id);
+
+    int getId(T item);
 
     Set<T> getAll();
 
