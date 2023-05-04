@@ -3,6 +3,7 @@ package com.bdg.airport_management_system.model;
 import com.bdg.airport_management_system.model.common.BaseMod;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static com.bdg.airport_management_system.validator.Validator.checkNull;
@@ -25,6 +26,16 @@ public class PassInTripMod extends BaseMod {
         setPassenger(passenger);
         setPlace(place);
         setTime(time);
+    }
+
+    public PassInTripMod(
+            final TripMod trip,
+            final PassengerMod passenger,
+            final String place) {
+        setTrip(trip);
+        setPassenger(passenger);
+        setPlace(place);
+        time = Timestamp.valueOf(LocalDateTime.now());
     }
 
     public PassInTripMod() {
