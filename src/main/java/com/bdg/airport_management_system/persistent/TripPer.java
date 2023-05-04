@@ -6,8 +6,11 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "trip")
-public class TripPer extends BaseEntity{
+@Table(
+        name = "trip",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"company", "airplane", "town_from", "town_to", "time_out", "time_in"})}
+)
+public class TripPer extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", referencedColumnName = "id", nullable = false, updatable = false)
