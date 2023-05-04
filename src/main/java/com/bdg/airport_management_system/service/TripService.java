@@ -3,9 +3,9 @@ package com.bdg.airport_management_system.service;
 import com.bdg.airport_management_system.converter.model_to_persistent.ModToPerTrip;
 import com.bdg.airport_management_system.converter.persistent_to_model.PerToModTrip;
 import com.bdg.airport_management_system.hibernate.HibernateUtil;
+import com.bdg.airport_management_system.model.CompanyMod;
 import com.bdg.airport_management_system.model.TripMod;
 import com.bdg.airport_management_system.persistent.CompanyPer;
-import com.bdg.airport_management_system.persistent.PassInTripPer;
 import com.bdg.airport_management_system.persistent.TripPer;
 import com.bdg.airport_management_system.repository.TripRepository;
 import org.hibernate.HibernateException;
@@ -14,44 +14,16 @@ import org.hibernate.Transaction;
 
 import javax.persistence.TypedQuery;
 import java.sql.Timestamp;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.bdg.airport_management_system.validator.Validator.*;
 
 public class TripService implements TripRepository {
 
-    private static final PerToModTrip PER_TO_MOD = new PerToModTrip();
-    private static final ModToPerTrip MOD_TO_PER = new ModToPerTrip();
-    private static final CompanyService COMPANY_SERVICE = new CompanyService();
-
-
-    @Override
-    public Set<TripMod> getAllFrom(String city) {
-        validateString(city);
-
-        Set<TripMod> tripModSet = new LinkedHashSet<>();
-        for (TripMod trip : getAll()) {
-            if (trip.getTownFrom().equals(city)) {
-                tripModSet.add(trip);
-            }
-        }
-        return tripModSet;
-    }
-
-
-    @Override
-    public Set<TripMod> getAllTo(String city) {
-        validateString(city);
-
-        Set<TripMod> tripModSet = new LinkedHashSet<>();
-        for (TripMod trip : getAll()) {
-            if (trip.getTownTo().equals(city)) {
-                tripModSet.add(trip);
-            }
-        }
-        return tripModSet;
-    }
+    private final PerToModTrip perToMod = new PerToModTrip();
+    private final ModToPerTrip modToPer = new ModToPerTrip();
+    private final CompanyService companyService = new CompanyService();
 
 
     @Override
@@ -64,12 +36,13 @@ public class TripService implements TripRepository {
 
             TripPer trip = session.get(TripPer.class, id);
             if (trip == null) {
+                System.out.println("There is no trip with " + id + " id: ");
                 transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return PER_TO_MOD.getModelFrom(trip);
+            return perToMod.getModelFrom(trip);
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -86,12 +59,13 @@ public class TripService implements TripRepository {
             TypedQuery<TripPer> query = session.createQuery("FROM TripPer ", TripPer.class);
 
             if (query.getResultList().isEmpty()) {
+                System.out.println("There is no trip: ");
                 transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return (Set<TripMod>) PER_TO_MOD.getModelListFrom(query.getResultList());
+            return (Set<TripMod>) perToMod.getModelListFrom(query.getResultList());
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -125,12 +99,13 @@ public class TripService implements TripRepository {
             query.setMaxResults(perPage);
 
             if (query.getResultList().isEmpty()) {
-                transaction.commit();
+                System.out.println("There is no trip: ");
+                transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return (Set<TripMod>) PER_TO_MOD.getModelListFrom(query.getResultList());
+            return (Set<TripMod>) perToMod.getModelListFrom(query.getResultList());
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -142,22 +117,23 @@ public class TripService implements TripRepository {
     @Override
     public TripMod save(TripMod item) {
         checkNull(item);
+
         if (exists(item)) {
             System.out.println("[" + item + "] address already exists: ");
             return null;
         }
 
-        int companyId = COMPANY_SERVICE.getId(item.getCompany());
+        int companyId = companyService.getId(item.getCompany());
         if (companyId < 0) {
-            COMPANY_SERVICE.save(item.getCompany());
+            CompanyMod newSavedCompany = companyService.save(item.getCompany());
+            System.out.println(newSavedCompany + "saved too: ");
         }
-
 
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            TripPer tripPer = MOD_TO_PER.getPersistentFrom(item);
+            TripPer tripPer = modToPer.getPersistentFrom(item);
             tripPer.setCompany(session.get(CompanyPer.class, companyId));
             session.save(tripPer);
             item.setId(tripPer.getId());
@@ -174,13 +150,21 @@ public class TripService implements TripRepository {
 
     @Override
     public boolean updateBy(int idToUpdate,
-                            String newAirplane, String newTownFrom, String newTownTo,
+                            String newAirplane,
+                            String newTownFrom,
+                            String newTownTo,
                             Timestamp newTimeOut,
                             Timestamp newTimeIn) {
         checkId(idToUpdate);
 
-        if (getBy(idToUpdate) == null) {
+        TripMod tripMod = getBy(idToUpdate);
+        if (tripMod == null) {
             System.out.println("Trip with " + idToUpdate + " id not found: ");
+            return false;
+        }
+
+        if (exists(new TripMod(tripMod.getCompany(), newAirplane, newTownFrom, newTownTo, newTimeOut, newTimeIn))) {
+            System.out.println("Trip already exists: ");
             return false;
         }
 
@@ -189,10 +173,6 @@ public class TripService implements TripRepository {
             transaction = session.beginTransaction();
 
             TripPer trip = session.get(TripPer.class, idToUpdate);
-            if (trip == null) {
-                transaction.rollback();
-                return false;
-            }
 
             if (!(newAirplane == null || newAirplane.isEmpty())) {
                 trip.setAirplane(newAirplane);
@@ -229,7 +209,8 @@ public class TripService implements TripRepository {
             return false;
         }
 
-        if (existsPassInTripBy(id)) {
+        PassInTripService passInTripService = new PassInTripService();
+        if (!passInTripService.getAllByTrip(id).isEmpty()) {
             System.out.println("First remove Trip by " + id + " in PassInTrip table: ");
             return false;
         }
@@ -250,6 +231,7 @@ public class TripService implements TripRepository {
     }
 
 
+    @Override
     public boolean exists(TripMod item) {
         checkNull(item);
 
@@ -262,6 +244,7 @@ public class TripService implements TripRepository {
     }
 
 
+    @Override
     public int getId(TripMod item) {
         checkNull(item);
 
@@ -274,21 +257,34 @@ public class TripService implements TripRepository {
     }
 
 
-    private boolean existsPassInTripBy(int tripId) {
-        checkId(tripId);
+    @Override
+    public Set<TripMod> getAllFrom(String city) {
+        validateString(city);
 
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSession()) {
-            transaction = session.beginTransaction();
-            String hql = "select pt from PassInTripPer as pt where pt.trip = :tripId";
-            TypedQuery<PassInTripPer> passInTripTypedQuery = session.createQuery(hql);
-            passInTripTypedQuery.setParameter("tripId", tripId);
-            transaction.commit();
-            return !passInTripTypedQuery.getResultList().isEmpty();
-        } catch (HibernateException e) {
-            assert transaction != null;
-            transaction.rollback();
-            throw new RuntimeException(e);
-        }
+        return getAll()
+                .stream()
+                .filter(tripMod -> city.equals(tripMod.getTownFrom()))
+                .collect(Collectors.toSet());
+    }
+
+
+    @Override
+    public Set<TripMod> getAllTo(String city) {
+        validateString(city);
+
+        return getAll()
+                .stream()
+                .filter(tripMod -> city.equals(tripMod.getTownTo()))
+                .collect(Collectors.toSet());
+    }
+
+
+    public Set<TripMod> getAllBy(int companyId) {
+        checkId(companyId);
+
+        return getAll()
+                .stream()
+                .filter(tripMod -> companyId == tripMod.getCompany().getId())
+                .collect(Collectors.toSet());
     }
 }
