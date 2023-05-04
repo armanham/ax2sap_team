@@ -2,6 +2,8 @@ package com.bdg.airport_management_system.model;
 
 import com.bdg.airport_management_system.model.common.BaseMod;
 
+import java.util.Objects;
+
 import static com.bdg.airport_management_system.validator.Validator.checkNull;
 import static com.bdg.airport_management_system.validator.Validator.validateString;
 
@@ -49,6 +51,19 @@ public class PassengerMod extends BaseMod {
     public void setAddress(final AddressMod addressMod) {
         checkNull(addressMod);
         this.addressMod = addressMod;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PassengerMod that = (PassengerMod) o;
+        return Objects.equals(name, that.name) && Objects.equals(phone, that.phone) && Objects.equals(addressMod, that.addressMod);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, phone, addressMod);
     }
 
     @Override
