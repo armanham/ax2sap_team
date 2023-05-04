@@ -5,8 +5,7 @@ import com.bdg.airport_management_system.persistent.common.BaseEntity;
 import com.bdg.airport_management_system.validator.Validator;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class PerToMod<P extends BaseEntity, M extends BaseMod> {
 
@@ -18,11 +17,9 @@ public abstract class PerToMod<P extends BaseEntity, M extends BaseMod> {
     public Collection<M> getModelListFrom(Collection<P> persistentList) {
         Validator.checkNull(persistentList);
 
-        Set<M> modelList = new LinkedHashSet<>(persistentList.size());
-        for (P tempPer : persistentList) {
-            modelList.add(getModelFrom(tempPer));
-        }
-
-        return modelList;
+        return persistentList
+                .stream()
+                .map(this::getModelFrom)
+                .collect(Collectors.toSet());
     }
 }

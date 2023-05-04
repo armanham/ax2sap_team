@@ -5,7 +5,6 @@ import com.bdg.airport_management_system.converter.persistent_to_model.PerToModA
 import com.bdg.airport_management_system.hibernate.HibernateUtil;
 import com.bdg.airport_management_system.model.AddressMod;
 import com.bdg.airport_management_system.persistent.AddressPer;
-import com.bdg.airport_management_system.persistent.PassengerPer;
 import com.bdg.airport_management_system.repository.AddressRepository;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -20,33 +19,8 @@ import static com.bdg.airport_management_system.validator.Validator.checkNull;
 
 public class AddressService implements AddressRepository {
 
-    private static final ModToPerAddress MOD_TO_PER = new ModToPerAddress();
-    private static final PerToModAddress PER_TO_MOD = new PerToModAddress();
-
-
-    @Override
-    public int getId(AddressMod addressMod) {
-        checkNull(addressMod);
-
-        for (AddressMod addressModTemp : getAll()) {
-            if (addressModTemp.equals(addressMod)) {
-                return addressModTemp.getId();
-            }
-        }
-        return -1;
-    }
-
-
-    public boolean exists(AddressMod addressMod) {
-        checkNull(addressMod);
-
-        for (AddressMod addressModTemp : getAll()) {
-            if (addressModTemp.equals(addressMod)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    private final ModToPerAddress modToPer = new ModToPerAddress();
+    private final PerToModAddress perToMod = new PerToModAddress();
 
 
     @Override
@@ -59,12 +33,13 @@ public class AddressService implements AddressRepository {
 
             AddressPer addressPer = session.get(AddressPer.class, id);
             if (addressPer == null) {
+                System.out.println("There is no address with " + id + " id: ");
                 transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return PER_TO_MOD.getModelFrom(addressPer);
+            return perToMod.getModelFrom(addressPer);
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -82,12 +57,13 @@ public class AddressService implements AddressRepository {
             TypedQuery<AddressPer> query = session.createQuery("FROM AddressPer", AddressPer.class);
 
             if (query.getResultList().isEmpty()) {
+                System.out.println("There is no address:");
                 transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return (Set<AddressMod>) PER_TO_MOD.getModelListFrom(query.getResultList());
+            return (Set<AddressMod>) perToMod.getModelListFrom(query.getResultList());
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -117,12 +93,13 @@ public class AddressService implements AddressRepository {
             query.setMaxResults(perPage);
 
             if (query.getResultList().isEmpty()) {
+                System.out.println("There is no address to show:");
                 transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return (Set<AddressMod>) PER_TO_MOD.getModelListFrom(query.getResultList());
+            return (Set<AddressMod>) perToMod.getModelListFrom(query.getResultList());
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -135,11 +112,11 @@ public class AddressService implements AddressRepository {
     public AddressMod save(AddressMod item) {
         checkNull(item);
         if (exists(item)) {
-            System.out.println("[" + item.getCountry() + ", " + item.getCity() + "] address already exists: ");
+            System.out.println("[" + item + "] already exists: ");
             return null;
         }
 
-        AddressPer addressPer = MOD_TO_PER.getPersistentFrom(item);
+        AddressPer addressPer = modToPer.getPersistentFrom(item);
 
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
@@ -159,18 +136,24 @@ public class AddressService implements AddressRepository {
 
 
     @Override
-    public boolean updateBy(int id, String newCountry, String newCity) {
-        checkId(id);
+    public boolean updateBy(int idToUpdate, String newCountry, String newCity) {
+        checkId(idToUpdate);
+
+        if (getBy(idToUpdate) == null) {
+            System.out.println("Address with " + idToUpdate + " id not found: ");
+            return false;
+        }
+
+        if (exists(new AddressMod(newCountry, newCity))) {
+            System.out.println("Address with " + newCountry + ", " + newCity + " already exists: ");
+            return false;
+        }
 
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            AddressPer addressPer = session.get(AddressPer.class, id);
-            if (addressPer == null) {
-                transaction.rollback();
-                return false;
-            }
+            AddressPer addressPer = session.get(AddressPer.class, idToUpdate);
 
             if (!(newCountry == null || newCountry.isEmpty())) {
                 addressPer.setCountry(newCountry);
@@ -193,7 +176,13 @@ public class AddressService implements AddressRepository {
     public boolean deleteBy(int id) {
         checkId(id);
 
-        if (existsPassengerBy(id)) {
+        if (getBy(id) == null) {
+            System.out.println("Address with " + id + " id not found: ");
+            return false;
+        }
+
+        PassengerService passengerService = new PassengerService();
+        if (!passengerService.getAllBy(id).isEmpty()) {
             System.out.println("First remove address by " + id + " in passenger table: ");
             return false;
         }
@@ -202,13 +191,8 @@ public class AddressService implements AddressRepository {
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            AddressPer addressPer = session.get(AddressPer.class, id);
-            if (addressPer == null) {
-                transaction.rollback();
-                return false;
-            }
+            session.delete(session.get(AddressPer.class, id));
 
-            session.delete(addressPer);
             transaction.commit();
             return true;
         } catch (HibernateException e) {
@@ -219,23 +203,28 @@ public class AddressService implements AddressRepository {
     }
 
 
-    private boolean existsPassengerBy(int addressId) {
-        checkId(addressId);
+    @Override
+    public int getId(AddressMod item) {
+        checkNull(item);
 
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSession()) {
-            transaction = session.beginTransaction();
-
-            String hql = "select p from PassengerPer as p where p.address = :addressId";
-            TypedQuery<PassengerPer> query = session.createQuery(hql);
-            query.setParameter("addressId", addressId);
-
-            transaction.commit();
-            return !query.getResultList().isEmpty();
-        } catch (HibernateException e) {
-            assert transaction != null;
-            transaction.rollback();
-            throw new RuntimeException(e);
+        for (AddressMod addressModTemp : getAll()) {
+            if (addressModTemp.equals(item)) {
+                return addressModTemp.getId();
+            }
         }
+        return -1;
+    }
+
+
+    @Override
+    public boolean exists(AddressMod item) {
+        checkNull(item);
+
+        for (AddressMod addressModTemp : getAll()) {
+            if (addressModTemp.equals(item)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

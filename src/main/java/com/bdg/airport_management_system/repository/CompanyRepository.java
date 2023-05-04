@@ -5,5 +5,5 @@ import com.bdg.airport_management_system.repository.common.CommonRepository;
 
 public interface CompanyRepository extends CommonRepository<CompanyMod> {
 
-    boolean updateBy(int id, CompanyMod item);
+    boolean updateBy(int idToUpdate, String newName);
 }

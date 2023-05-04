@@ -23,7 +23,7 @@ public class PassInTripPer extends BaseEntity {
     @Column(updatable = false, nullable = false)
     private Timestamp time;
 
-    @Column(nullable = false, updatable = false, length = 3)
+    @Column(updatable = false, nullable = false, length = 3)
     private String place;
 
 

@@ -6,11 +6,15 @@ public interface CommonRepository<T> {
 
     T getBy(int id);
 
+    int getId(T item);
+
     Set<T> getAll();
 
     Set<T> get(int offset, int perPage, String sort);
 
     T save(T item);
+
+    boolean exists(T item);
 
     boolean deleteBy(int id);
 }

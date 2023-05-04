@@ -3,6 +3,7 @@ package com.bdg.airport_management_system.model;
 import com.bdg.airport_management_system.model.common.BaseMod;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 import static com.bdg.airport_management_system.validator.Validator.checkNull;
 import static com.bdg.airport_management_system.validator.Validator.validateString;
@@ -87,6 +88,19 @@ public class TripMod extends BaseMod {
     public void setTimeIn(final Timestamp timeIn) {
         checkNull(timeIn);
         this.timeIn = timeIn;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TripMod tripMod = (TripMod) o;
+        return Objects.equals(company, tripMod.company) && Objects.equals(airplane, tripMod.airplane) && Objects.equals(townFrom, tripMod.townFrom) && Objects.equals(townTo, tripMod.townTo) && Objects.equals(timeOut, tripMod.timeOut) && Objects.equals(timeIn, tripMod.timeIn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(company, airplane, townFrom, townTo, timeOut, timeIn);
     }
 
     @Override

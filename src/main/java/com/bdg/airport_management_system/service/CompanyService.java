@@ -5,7 +5,6 @@ import com.bdg.airport_management_system.converter.persistent_to_model.PerToModC
 import com.bdg.airport_management_system.hibernate.HibernateUtil;
 import com.bdg.airport_management_system.model.CompanyMod;
 import com.bdg.airport_management_system.persistent.CompanyPer;
-import com.bdg.airport_management_system.persistent.TripPer;
 import com.bdg.airport_management_system.repository.CompanyRepository;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -14,14 +13,13 @@ import org.hibernate.Transaction;
 import javax.persistence.TypedQuery;
 import java.util.Set;
 
-import static com.bdg.airport_management_system.validator.Validator.checkId;
-import static com.bdg.airport_management_system.validator.Validator.checkNull;
+import static com.bdg.airport_management_system.validator.Validator.*;
 
 
 public class CompanyService implements CompanyRepository {
 
-    private static final ModToPerCompany MOD_TO_PER = new ModToPerCompany();
-    private static final PerToModCompany PER_TO_MOD = new PerToModCompany();
+    private final ModToPerCompany modToPer = new ModToPerCompany();
+    private final PerToModCompany perToMod = new PerToModCompany();
 
 
     @Override
@@ -34,12 +32,13 @@ public class CompanyService implements CompanyRepository {
 
             CompanyPer companyPer = session.get(CompanyPer.class, id);
             if (companyPer == null) {
-                transaction.commit();
+                System.out.println("There is no company with " + id + " id: ");
+                transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return PER_TO_MOD.getModelFrom(companyPer);
+            return perToMod.getModelFrom(companyPer);
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -57,12 +56,13 @@ public class CompanyService implements CompanyRepository {
             TypedQuery<CompanyPer> query = session.createQuery("FROM CompanyPer", CompanyPer.class);
 
             if (query.getResultList().isEmpty()) {
-                transaction.commit();
+                System.out.println("There is no company:");
+                transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return (Set<CompanyMod>) PER_TO_MOD.getModelListFrom(query.getResultList());
+            return (Set<CompanyMod>) perToMod.getModelListFrom(query.getResultList());
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -92,12 +92,13 @@ public class CompanyService implements CompanyRepository {
             query.setMaxResults(perPage);
 
             if (query.getResultList().isEmpty()) {
-                transaction.commit();
+                System.out.println("There is no company:");
+                transaction.rollback();
                 return null;
             }
 
             transaction.commit();
-            return (Set<CompanyMod>) PER_TO_MOD.getModelListFrom(query.getResultList());
+            return (Set<CompanyMod>) perToMod.getModelListFrom(query.getResultList());
         } catch (HibernateException e) {
             assert transaction != null;
             transaction.rollback();
@@ -110,11 +111,22 @@ public class CompanyService implements CompanyRepository {
     public CompanyMod save(CompanyMod item) {
         checkNull(item);
 
+        if (exists(item)) {
+            System.out.println("[" + item + "] company already exists: ");
+            return null;
+        }
+
+        if (doesExistWith(item.getName())) {
+            System.out.println("Company with " + item.getName() + " already exists: ");
+            return null;
+        }
+
+        CompanyPer companyPer = modToPer.getPersistentFrom(item);
+
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            CompanyPer companyPer = MOD_TO_PER.getPersistentFrom(item);
             session.save(companyPer);
             item.setId(companyPer.getId());
 
@@ -129,22 +141,28 @@ public class CompanyService implements CompanyRepository {
 
 
     @Override
-    public boolean updateBy(int id, CompanyMod item) {
-        checkId(id);
-        checkNull(item);
+    public boolean updateBy(int idToUpdate, String newName) {
+        checkId(idToUpdate);
+
+        if (getBy(idToUpdate) == null) {
+            System.out.println("Company with " + idToUpdate + " id not found: ");
+            return false;
+        }
+
+        if (doesExistWith(newName)) {
+            System.out.println("Company with " + newName + " already exists: ");
+            return false;
+        }
 
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            CompanyPer companyPer = session.get(CompanyPer.class, id);
-            if (companyPer == null) {
-                transaction.commit();
-                return false;
-            }
+            CompanyPer companyPer = session.get(CompanyPer.class, idToUpdate);
 
-            companyPer.setName(item.getName());
-            companyPer.setFoundDate(item.getFoundDate());
+            if (!(newName == null || newName.isEmpty())) {
+                companyPer.setName(newName);
+            }
 
             transaction.commit();
             return true;
@@ -160,7 +178,13 @@ public class CompanyService implements CompanyRepository {
     public boolean deleteBy(int id) {
         checkId(id);
 
-        if (existsTripBy(id)) {
+        if (getBy(id) == null) {
+            System.out.println("Company with " + id + " id not found: ");
+            return false;
+        }
+
+        TripService tripService = new TripService();
+        if (!tripService.getAllBy(id).isEmpty()) {
             System.out.println("First remove company by " + id + " in trip table: ");
             return false;
         }
@@ -169,14 +193,8 @@ public class CompanyService implements CompanyRepository {
         try (Session session = HibernateUtil.getSession()) {
             transaction = session.beginTransaction();
 
-            CompanyPer companyPer = session.get(CompanyPer.class, id);
+            session.delete(session.get(CompanyPer.class, id));
 
-            if (companyPer == null) {
-                transaction.commit();
-                return false;
-            }
-
-            session.delete(companyPer);
             transaction.commit();
             return true;
         } catch (HibernateException e) {
@@ -187,23 +205,40 @@ public class CompanyService implements CompanyRepository {
     }
 
 
-    private boolean existsTripBy(int companyId) {
-        checkId(companyId);
+    @Override
+    public int getId(CompanyMod item) {
+        checkNull(item);
 
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSession()) {
-            transaction = session.beginTransaction();
-
-            String hql = "select t from TripPer as t where t.company = :companyId";
-            TypedQuery<TripPer> query = session.createQuery(hql);
-            query.setParameter("companyId", companyId);
-
-            transaction.commit();
-            return !query.getResultList().isEmpty();
-        } catch (HibernateException e) {
-            assert transaction != null;
-            transaction.rollback();
-            throw new RuntimeException(e);
+        for (CompanyMod tempCompanyMod : getAll()) {
+            if (item.equals(tempCompanyMod)) {
+                return tempCompanyMod.getId();
+            }
         }
+        return -1;
+    }
+
+
+    @Override
+    public boolean exists(CompanyMod item) {
+        checkNull(item);
+
+        for (CompanyMod tempCompanyMod : getAll()) {
+            if (item.equals(tempCompanyMod)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public boolean doesExistWith(String name) {
+        validateString(name);
+
+        for (CompanyMod tempCompanyMod : getAll()) {
+            if (tempCompanyMod.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
